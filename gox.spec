@@ -1,11 +1,11 @@
 Summary:	Simple Go Cross Compilation
 Name:		gox
-Version:	0.2.0
+Version:	0.3.0
 Release:	0.1
 License:	MPLv2.0
 Group:		Development
 Source0:	https://github.com/mitchellh/gox/archive/v%{version}/%{name}-%{version}.tar.gz
-# Source0-md5:	a34e1bdec4bce04afa9643a9dadac113
+# Source0-md5:	2a05d9e53772c11a683a06a557ad0002
 URL:		https://github.com/mitchellh/gox
 BuildRequires:	golang >= 1.1
 #BuildRequires:	golang(github.com/mitchellh/iochan)
@@ -18,6 +18,7 @@ platforms. Gox will also build the cross-compilation toolchain for
 you.
 
 %prep
+%setup -qcT
 # For building go binaries we must install the tarballed git repo into the
 # appropriate src directory
 mkdir -p src/github.com/mitchellh/
