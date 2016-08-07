@@ -1,7 +1,8 @@
+%define		pkgname		gox
 Summary:	Simple Go Cross Compilation
 Name:		gox
 Version:	0.3.0
-Release:	0.1
+Release:	0.2
 License:	MPLv2.0
 Group:		Development
 Source0:	https://github.com/mitchellh/gox/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -11,6 +12,11 @@ BuildRequires:	golang >= 1.1
 #BuildRequires:	golang(github.com/mitchellh/iochan)
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
+%define		_enable_debug_packages 0
+%define		gobuild(o:) go build -ldflags "${LDFLAGS:-} -B 0x$(head -c20 /dev/urandom|od -An -tx1|tr -d ' \\n')" -a -v -x %{?**};
+%define		gopath		%{_libdir}/golang
+%define		import_path	github.com/mitchellh/%{pkgname}
+
 %description
 Gox is a simple, no-frills tool for Go cross compilation that behaves
 a lot like standard go build. Gox will parallelize builds for multiple
@@ -18,40 +24,28 @@ platforms. Gox will also build the cross-compilation toolchain for
 you.
 
 %prep
-%setup -qcT
-# For building go binaries we must install the tarballed git repo into the
-# appropriate src directory
-mkdir -p src/github.com/mitchellh/
-cd src/github.com/mitchellh/
-tar xzf %{SOURCE0}
-cd -
-mv src/github.com/mitchellh/%{name}-%{version}\
-  src/github.com/mitchellh/%{name}
+%setup -q
 
-# Symlink the go lib build dependencies to the build directory
-%define gopath %{_libdir}/golang
-%define buildgosrc src
-mkdir -p %{buildgosrc}/github.com/mitchellh
-ln -sv %{gopath}/src/github.com/mitchellh/* %{buildgosrc}/github.com/mitchellh/
+install -d src/$(dirname %{import_path})
+ln -s ../../.. src/%{import_path}
+
+install -d bin
 
 %build
-# set the GOPATH so that internal dependencies are automatically downloaded to
-# the correct location
-%define packer_gopath %{_builddir}/%{name}-%{version}
-export GOPATH=%{packer_gopath}
+# set the GOPATH so that internal dependencies are automatically downloaded to the correct location
+export GOPATH=$(pwd)
 
 # set the GOBIN so compiled files go into the builddir
-mkdir -p %{packer_gopath}/bin
-export GOBIN=%{packer_gopath}/bin
+export GOBIN=$(pwd)/bin
 
-# Checkout the specific tag in git for the version we are building
-cd %{packer_gopath}
-go get github.com/mitchellh/gox
+go get -v github.com/mitchellh/iochan
+
+%gobuild -o bin/%{name}
 
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT%{_bindir}
-cp -p %{packer_gopath}/bin/gox $RPM_BUILD_ROOT%{_bindir}/gox
+install -p bin/gox $RPM_BUILD_ROOT%{_bindir}/gox
 
 %clean
 rm -rf $RPM_BUILD_ROOT
